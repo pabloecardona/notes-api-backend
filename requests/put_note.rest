@@ -1,0 +1,15 @@
+PUT http://localhost:3001/api/notes/606f8331b35a3f0fc084ed29
+Content-Type: application/json
+
+{
+    "content": "Nota editada para devolver nueva info",
+    "important": true
+}
+
+###
+//para el caso en que enviemos una nota vacía
+PUT http://localhost:3001/api/notes/606f8331b35a3f0fc084ed29
+Content-Type: application/json
+
+{
+}
