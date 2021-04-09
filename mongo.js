@@ -4,7 +4,7 @@
 const { OnUncaughtException } = require('@sentry/node/dist/integrations');
 const mongoose = require('mongoose')
 //definimos el conection string que nos provee mongoDB
-const connectionString = 'mongodb+srv://pabloecardona:beaker1123!@cluster0.3i13l.mongodb.net/appDB?retryWrites=true&w=majority'
+const connectionString = process.env.MONGO_DB_URI
 
 //conexión a mongoDB
 mongoose.connect(connectionString, {
