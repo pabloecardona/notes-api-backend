@@ -1,10 +1,15 @@
 //Descripción: archivo encargado de conectarse con la db
 
 //importamos mongoose
-const { OnUncaughtException } = require('@sentry/node/dist/integrations');
+//const { OnUncaughtException } = require('@sentry/node/dist/integrations');
 const mongoose = require('mongoose')
+
+//extraemos las variables de entorno:
+const {MONGO_DB_URI, MONGO_DB_URI_TEST, NODE_ENV} = process.env
+
 //definimos el conection string que nos provee mongoDB
-const connectionString = process.env.MONGO_DB_URI
+//según si estamos en modo testing o no
+const connectionString = NODE_ENV === 'test' ? MONGO_DB_URI_TEST : MONGO_DB_URI
 
 //conexión a mongoDB
 mongoose.connect(connectionString, {
@@ -20,6 +25,8 @@ mongoose.connect(connectionString, {
         console.error(err);
     })
 
-// process.on('uncaughtException', () => {
-//     mongoose.disconnect()
-// })
+process.on('uncaughtException', error => {
+    console.error(error)
+    mongoose.disconnect()
+    
+})

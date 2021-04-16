@@ -83,7 +83,7 @@ app.use(Sentry.Handlers.tracingHandler());
 
 app.get('/', (request, response) => {
   response.send('<h1>Hola mundo!</h1>')
-})
+}) 
 
 //para debuggear Sentry
 app.get("/debug-sentry", function mainHandler(req, res) {
@@ -91,28 +91,37 @@ app.get("/debug-sentry", function mainHandler(req, res) {
 });
 
 //Al ir a esa uri le decimos que haga un 'find' en la bd, esperamos por la respuesta y la mostramos
-app.get('/api/notes', (request, response) => {
-  Note.find({})
-    .then(notes => {
-      response.json(notes)
-    })
+app.get('/api/notes', async (request, response) => {
+  const notes = await Note.find({})
+  response.json(notes)
 })
 
-app.get('/api/notes/:id', (request, response, next) => {
+//Forma utilizando promesas sin usar async await
+// //Al ir a esa uri le decimos que haga un 'find' en la bd, esperamos por la respuesta y la mostramos
+// app.get('/api/notes', (request, response) => {
+//   .then(notes => {
+//     Note.find({})
+//     response.json(notes)
+//   })
+// })
+
+app.get('/api/notes/:id', async (request, response, next) => {
   // const id = Number(request.params.id)
-  const{id} = request.params
-  Note.findById(id)
-    .then(note => {
-      if (note) {
-        response.json(note)
-      } else {
-        response.status(404).end()
-      }
-    })
-    //en caso de haber un error lo pasamos al siguiente middleware
-    .catch(error => {
-      next(error)
-    })
+  const {id} = request.params
+  try {
+    const note = await Note.findById(id)
+    if (note) {
+      response.json(note)
+    } else {
+      response.status(404).end()
+    }
+  }
+  //en caso de haber un error lo pasamos al siguiente middleware
+  catch(error){
+    next(error)
+  }
+    
+   
   // const note = notes.find(note => note.id === id)
 
   // if (note) {
@@ -148,18 +157,29 @@ app.put('/api/notes/:id', (request, response, next) => {
     })
 })
 
-app.delete('/api/notes/:id', (request, response, next) => {
+// app.delete('/api/notes/:id', (request, response, next) => {
+//   const{id} = request.params
+//   Note.findByIdAndDelete(id)
+//     .then(() => {
+//       response.status(204).end()
+//     })
+//     .catch(error => {
+//       next(error)
+//     })
+// })
+
+app.delete('/api/notes/:id', async (request, response, next) => {
   const{id} = request.params
-  Note.findByIdAndDelete(id)
-    .then(() => {
-      response.status(204).end()
-    })
-    .catch(error => {
-      next(error)
-    })
+  try {
+    await Note.findByIdAndDelete(id)
+    response.status(204).end()
+  } 
+  catch(error) {
+    next(error)
+  }
 })
 
-app.post('/api/notes', (request, response) => {
+app.post('/api/notes', async (request, response) => {
   const note = request.body
   // validamos si recibimos una nota vacía o no
   if (!note || !note.content) {
@@ -177,10 +197,9 @@ app.post('/api/notes', (request, response) => {
   })
 
   //guardamos la nota en la db y esperamos por la respuesta
-  newNote.save()
-    .then(savedNote => {
-      response.status(201).json(savedNote)
-    })
+  const savedNote = await newNote.save()
+  response.status(201).json(savedNote)
+
   // // recuperamos todas las ids para poder luego generar nosotros la ide de una nueva nota
   // const ids = notes.map(note => note.id)
   // // buscamos la id más grande
@@ -218,6 +237,11 @@ app.use(errorHandler)
 //en caso de no existir la variable de entorno entonces le asigna el 3001
 const PORT = process.env.PORT
 
-app.listen(PORT, () => {
+//guardamos la información del servidor que se creó, para cerrar la conexión luego
+//de realizar los tests
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
+
+//exportamos app para poder utilizarla en los tests
+module.exports = {app, server}
