@@ -105,26 +105,6 @@ describe('DELETE a note', () => {
 })
 
 describe('EDIT a note', () => {
-  test('is possible', async () => {
-    //a la respuesta que recibimos llamada 'response' la guardamos en 'firstResponse'
-    const {response: firstResponse} = await getAllContentsFromNotes()
-    const noteToEdit = firstResponse.body[0]
-    const newNoteInfo = {
-      content: 'Nota modificada en testing',
-      important: true
-    }
-
-    await api
-      .put(`/api/notes/${noteToEdit.id}`)
-      .send(newNoteInfo)
-      .expect('Content-Type', /application\/json/)
-    
-    const {response: secondResponse, contents} = await getAllContentsFromNotes()
-    expect(secondResponse.body).toHaveLength(initialNotes.length)
-    expect(contents).not.toContain(noteToEdit.content)
-    expect(contents).toContain(newNoteInfo.content)
-  })
-
   test('is not possible without content', async () => {
     //a la respuesta que recibimos llamada 'response' la guardamos en 'firstResponse'
     const {response: firstResponse} = await getAllContentsFromNotes()
@@ -159,6 +139,26 @@ describe('EDIT a note', () => {
     const {response: secondResponse, contents} = await getAllContentsFromNotes()
     expect(secondResponse.body).toHaveLength(initialNotes.length)
     expect(contents).toContain(noteToEdit.content)
+  })
+
+  test('is possible', async () => {
+    //a la respuesta que recibimos llamada 'response' la guardamos en 'firstResponse'
+    const {response: firstResponse} = await getAllContentsFromNotes()
+    const noteToEdit = firstResponse.body[0]
+    const newNoteInfo = {
+      content: 'Nota modificada en testing',
+      important: true
+    }
+
+    await api
+      .put(`/api/notes/${noteToEdit.id}`)
+      .send(newNoteInfo)
+      .expect('Content-Type', /application\/json/)
+    
+    const {response: secondResponse, contents} = await getAllContentsFromNotes()
+    expect(secondResponse.body).toHaveLength(initialNotes.length)
+    expect(contents).not.toContain(noteToEdit.content)
+    expect(contents).toContain(newNoteInfo.content)
   })
 })
 

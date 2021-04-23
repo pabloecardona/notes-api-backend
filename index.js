@@ -25,6 +25,8 @@ const Note = require('./models/Note')
 const notFound = require('./middlewares/notFound')
 const errorHandler = require ('./middlewares/errorHandler')
 
+const usersRouter = require('./controllers/users')
+
 //utilizamos cors, permitiendo el acceso a la API desde cualquier origen
 app.use(cors())
 
@@ -132,7 +134,7 @@ app.get('/api/notes/:id', async (request, response, next) => {
 })
 
 //para editar una nota usamos el 'put'
-app.put('/api/notes/:id', (request, response, next) => {
+app.put('/api/notes/:id', async (request, response, next) => {
   const{id} = request.params
   const note = request.body
   // validamos si recibimos una nota vacía o no
@@ -148,13 +150,12 @@ app.put('/api/notes/:id', (request, response, next) => {
     important: note.important
   }
 
-  Note.findByIdAndUpdate(id, newNoteInfo, {new: true})
-    .then(result => {
-      response.json(result)
-    })
-    .catch(error => {
+  try {
+    const result = await Note.findByIdAndUpdate(id, newNoteInfo, {new: true})
+    response.json(result)
+  } catch(error) {
       next(error)
-    })
+  }
 })
 
 // app.delete('/api/notes/:id', (request, response, next) => {
@@ -222,6 +223,7 @@ app.post('/api/notes', async (request, response) => {
 })
 
 
+app.use('/api/users', usersRouter)
 
 //usamos un middleware para saber si no entró a ninguno de los anteriores
 //entonces devolvemos un 'not found'

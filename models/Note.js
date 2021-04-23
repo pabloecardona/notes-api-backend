@@ -6,7 +6,11 @@ const {model, Schema} = require('mongoose')
 const noteSchema = new Schema({
     content: String,
     date: Date,
-    important: Boolean
+    important: Boolean,
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    }
 })
 
 //Le indicamos al schema que cuando nos devuelva un json de una nota, 

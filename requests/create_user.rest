@@ -1,0 +1,16 @@
+POST http://localhost:3001/api/users
+Content-Type: application/json
+
+{
+    "username": "pabloecardona1",
+    "name": "Pablo",
+    "password": "lacontraseña"
+}
+
+###
+//para el caso en que enviemos una nota vacía
+POST http://localhost:3001/api/users
+Content-Type: application/json
+
+{
+}
