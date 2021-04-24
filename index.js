@@ -25,7 +25,8 @@ const Note = require('./models/Note')
 const notFound = require('./middlewares/notFound')
 const errorHandler = require ('./middlewares/errorHandler')
 
-const usersRouter = require('./controllers/users')
+const usersRouter = require('./controllers/users');
+const User = require('./models/User');
 
 //utilizamos cors, permitiendo el acceso a la API desde cualquier origen
 app.use(cors())
@@ -94,7 +95,7 @@ app.get("/debug-sentry", function mainHandler(req, res) {
 
 //Al ir a esa uri le decimos que haga un 'find' en la bd, esperamos por la respuesta y la mostramos
 app.get('/api/notes', async (request, response) => {
-  const notes = await Note.find({})
+  const notes = await Note.find({}).populate('user', {userName: 1, name: 1, _id: 0})
   response.json(notes)
 })
 
@@ -111,7 +112,7 @@ app.get('/api/notes/:id', async (request, response, next) => {
   // const id = Number(request.params.id)
   const {id} = request.params
   try {
-    const note = await Note.findById(id)
+    const note = await Note.findById(id).populate('user', {userName: 1, name: 1, _id: 0})
     if (note) {
       response.json(note)
     } else {
@@ -181,24 +182,37 @@ app.delete('/api/notes/:id', async (request, response, next) => {
 })
 
 app.post('/api/notes', async (request, response) => {
-  const note = request.body
+  const {
+    content, 
+    important = false,
+    userId} = request.body
+
   // validamos si recibimos una nota vacía o no
-  if (!note || !note.content) {
+  if (!content) {
     // en caso de estar vacía devolvemos un 400 con el mensaje
     return response.status(400).json({
       error: 'note.content is missing'
     })
   }
 
+  //recuperamos la info del usuario que creó la nota
+  const user = await User.findById(userId)
+
   //Creamos la nueva nota utilizando el modelo 'Note'
   const newNote = new Note ({
-    content: note.content,
+    content,
     date: new Date().toISOString(),
-    important: typeof note.important !== 'undefined' ? note.important : false
+    important,
+    user: user._id
   })
 
   //guardamos la nota en la db y esperamos por la respuesta
   const savedNote = await newNote.save()
+
+  //agregamos la id de la nota creada a las notas del usuario
+  user.notes = user.notes.concat(savedNote._id)
+  await user.save()
+
   response.status(201).json(savedNote)
 
   // // recuperamos todas las ids para poder luego generar nosotros la ide de una nueva nota
