@@ -28,6 +28,11 @@ const errorHandler = require ('./middlewares/errorHandler')
 const usersRouter = require('./controllers/users');
 const User = require('./models/User');
 
+const loginRouter = require('./controllers/login');
+
+const userExtractor = require('./middlewares/userExtractor')
+
+
 //utilizamos cors, permitiendo el acceso a la API desde cualquier origen
 app.use(cors())
 
@@ -181,11 +186,16 @@ app.delete('/api/notes/:id', async (request, response, next) => {
   }
 })
 
-app.post('/api/notes', async (request, response) => {
+app.post('/api/notes', userExtractor, async (request, response, next) => {
   const {
     content, 
-    important = false,
-    userId} = request.body
+    important = false} = request.body
+ 
+  //extraemos el userId que guardamos en la request en el middleware 'userExtractor'
+  const { userId } = request
+  
+  //recuperamos la info del usuario que creó la nota
+  const user = await User.findById(userId)
 
   // validamos si recibimos una nota vacía o no
   if (!content) {
@@ -195,9 +205,6 @@ app.post('/api/notes', async (request, response) => {
     })
   }
 
-  //recuperamos la info del usuario que creó la nota
-  const user = await User.findById(userId)
-
   //Creamos la nueva nota utilizando el modelo 'Note'
   const newNote = new Note ({
     content,
@@ -206,14 +213,19 @@ app.post('/api/notes', async (request, response) => {
     user: user._id
   })
 
-  //guardamos la nota en la db y esperamos por la respuesta
-  const savedNote = await newNote.save()
+  try{
+    //guardamos la nota en la db y esperamos por la respuesta
+    const savedNote = await newNote.save()
 
-  //agregamos la id de la nota creada a las notas del usuario
-  user.notes = user.notes.concat(savedNote._id)
-  await user.save()
+    //agregamos la id de la nota creada a las notas del usuario
+    user.notes = user.notes.concat(savedNote._id)
+    await user.save()
 
-  response.status(201).json(savedNote)
+    response.status(201).json(savedNote)
+  }catch(error){
+    next(error)
+  }
+  
 
   // // recuperamos todas las ids para poder luego generar nosotros la ide de una nueva nota
   // const ids = notes.map(note => note.id)
@@ -238,6 +250,8 @@ app.post('/api/notes', async (request, response) => {
 
 
 app.use('/api/users', usersRouter)
+
+app.use('/api/login', loginRouter)
 
 //usamos un middleware para saber si no entró a ninguno de los anteriores
 //entonces devolvemos un 'not found'

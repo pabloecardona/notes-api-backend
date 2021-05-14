@@ -48,7 +48,8 @@ describe('POST notes', () => {
   test('a valid note can be added', async () => {
     const newNote = {
       content: 'Nota agregada para testing de post',
-      important: true
+      important: true,
+      userId: "60835cb9e8ecfb3488a5a52e"
     }
     
     await api
